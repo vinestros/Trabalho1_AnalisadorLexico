@@ -98,13 +98,13 @@ CHAR_LITERAL   '[^']'
 {COMENTARIO_LINHA} { /* Ignora comentário de linha */ }
 {COMENTARIO_BLOCO} { /* Ignora comentário de bloco */ }
 
-"if"           { return T_IF; }
-"else"         { return T_ELSE; }
-"while"        { return T_WHILE; }
-"int"          { return T_INT_KEYWORD; }
-"float"        { return T_FLOAT_KEYWORD; }
-"char"         { return T_CHAR_KEYWORD; }
-"return"       { return T_RETURN; }
+"prove"        { return T_IF; }
+"se_ruim"        { return T_ELSE; }
+"cozinhando"   { return T_WHILE; }
+"medida"       { return T_INT_KEYWORD; }
+"liquido"      { return T_FLOAT_KEYWORD; }
+"tempero"      { return T_CHAR_KEYWORD; }
+"sirva"        { return T_RETURN; }
 
 {INTEIRO}      { yylval = atoi(yytext); return T_INTEGER; }
 {FLOAT}        { return T_FLOAT; }

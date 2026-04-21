@@ -1,25 +1,25 @@
-int n;
-float r;
-int buf[4];
-char c;
+medida litro;
+liquido agua;
+medida buf[4];
+tempero cominho;
 
-n = 10;
-r = 1.5;
-buf[0] = n + 1;
-c = 'z';
+litro = 10;
+agua = 1.5;
+buf[0] = litro + 1;
+cominho = 'z';
 
-if (n != 0) {
-    n = n * 2;
-} else {
-    n = 0;
+prove (litro != 0) {
+    litro = litro * 2;
+} se_ruim {
+    litro = 0;
 }
 
-while (n > 0) {
-    n = n - 1;
+cozinhando (litro > 0) {
+    litro = litro - 1;
 }
 
-if (n == 0) {
-    r = r + 1.0;
+prove (litro == 0) {
+    agua = agua + 1.0;
 }
 
-return n;
+sirva litro;

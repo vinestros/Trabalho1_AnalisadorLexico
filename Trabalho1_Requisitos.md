@@ -29,4 +29,5 @@ Sequência de Tokens:
 <float> <id, 6> <= > <id, 4> </ > <id, 5> <; > <id, 7> <. > <id, 8>
 <. > <id, 9> <(> <id, 6> <)> <; > <}>
 
-Uma vez que a linguagem será criada pelo grupo, deve-se fazer uma documentação robusta, explicando e detalhando os comandos, padrões utilizados, etc. Sem uma boa documentação não é possível analisar o código Flex.
+Uma vez que a linguagem será criada pelo grupo, deve-se fazer uma documentação robusta (mais completa possível, com diagramas de 
+transição), explicando e detalhando os comandos, padrões utilizados, etc. Sem uma boa documentação não é possível analisar o código Flex.

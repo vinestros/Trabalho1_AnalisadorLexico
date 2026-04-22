@@ -6,6 +6,8 @@ Este documento especifica a **linguagem fonte** (vocabulário e estruturas prete
 
 ## 1. Visão geral
 
+A linguagem proposta adota uma abordagem imperativa estruturada, em que os programas são compostos por comandos executados sequencialmente, com suporte a controle de fluxo por meio de condicionais e laços de repetição. A escolha de uma temática de gastronomia tem como objetivo tornar os programas mais expressivos e intuitivos, sem comprometer o rigor formal necessário para definição de uma linguagem. Além disso, essa linguagem mantém compatibilidade com o conjunto de caracteres ASCII, garantindo portabilidade e previsibilidade na análise léxica, especialmente no reconhecimento de identificadores, literais e operadores.
+
 | Aspecto | Descrição |
 |--------|-------------|
 | Codificação | ASCII |
@@ -45,6 +47,14 @@ Definições de apelidos em Flex (equivalente a regex):
 | `CHAR_LITERAL` | `'[^']'` | Um caractere entre aspas simples |
 
 ### 2.1. Tabela de tokens (padrão → token → saída)
+
+A representação textual dos tokens foi projetada para ser legível e informativa, permitindo a fácil inspeção manual da saída do analisador, no qual os formatos seguem o padrão:
+
+  * <classe, valor> para tokens parametrizados (como números e identificadores) 
+  * <símbolo> para tokens simples (como operadores e separadores)
+
+Essa padronização facilita tanto a depuração quanto a integração futura com analisadores sintáticos.
+
 
 Tokens emitidos pelo `yylex()` e impressos no `switch` do `main`.
 
@@ -122,6 +132,14 @@ lista_expr      ::= expr { "," expr } ;
 ---
 
 ## 4. Tabela de símbolos e formato de saída
+
+A tabela de símbolos tem papel fundamental na análise léxica, uma vez que possibilita associar cada identificador a uma posição única. Essa abordagem evita duplicação e facilita etapas posteriores, como análise semântica e geração de código. Nesse sentido, a política adotada é baseada em inserção sob demanda, visto que:
+
+  * Ao encontrar um identificador pela primeira vez, ele é inserido na tabela. 
+  * Ocorrências subsequentes reutilizam o índice previamente atribuído. 
+
+Assim, essa estratégia garante que cada identificador possua uma representação única durante toda a execução do analisador.
+
 
 Implementação em [`scanner_c.l`](scanner_c.l):
 
@@ -271,7 +289,15 @@ Arquivo [`teste.lang`](teste.lang) ilustra declarações, atribuições, vetor, 
 
 ---
 
-## 9. Referências de arquivos
+## 9. Conclusão
+
+A linguagem proposta atende aos requisitos definidos para o trabalho, uma vez que oferece um conjunto consistente de construções para programação imperativa.
+Assim, o analisador léxico implementado é capaz de reconhecer corretamente os elementos fundamentais da linguagem, gerando uma representação estruturada por meio de tokens e mantendo uma tabela de símbolos para identificadores.
+Portanto, a documentação detalhada apresentada neste documento, garante a compreensibilidade, tanto da linguagem quanto do funcionamento do analisador, permitindo sua avaliação, manutenção e possível evolução para etapas posteriores de compilação.
+
+---
+
+## 10. Referências de arquivos
 
 | Arquivo | Papel |
 |---------|--------|

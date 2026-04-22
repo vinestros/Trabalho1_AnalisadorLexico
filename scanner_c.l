@@ -12,6 +12,8 @@ typedef enum {
     T_IF = 258, 
     T_ELSE, 
     T_WHILE, 
+    T_VOID_KEYWORD, 
+    T_FUNCTION_KEYWORD,
 
     T_INT_KEYWORD, 
     T_FLOAT_KEYWORD, 
@@ -99,12 +101,14 @@ CHAR_LITERAL   '[^']'
 {COMENTARIO_BLOCO} { /* Ignora comentário de bloco */ }
 
 "prove"        { return T_IF; }
-"se_ruim"        { return T_ELSE; }
+"se_ruim"      { return T_ELSE; }
 "cozinhando"   { return T_WHILE; }
 "medida"       { return T_INT_KEYWORD; }
 "liquido"      { return T_FLOAT_KEYWORD; }
 "tempero"      { return T_CHAR_KEYWORD; }
 "sirva"        { return T_RETURN; }
+"vazio"        { return T_VOID_KEYWORD; }
+"receita"      { return T_FUNCTION_KEYWORD; }
 
 {INTEIRO}      { yylval = atoi(yytext); return T_INTEGER; }
 {FLOAT}        { return T_FLOAT; }
@@ -113,17 +117,17 @@ CHAR_LITERAL   '[^']'
 
 {ID}           { yylval = get_symbol_position(yytext); if (yylval != -1) return T_ID; }
 
-"=="           { return T_OP_IGUALDADE; }
-"!="           { return T_OP_DIFERENTE; }
-"<="           { return T_OP_MENOR_IGUAL; }
-">="           { return T_OP_MAIOR_IGUAL; }
-"<"            { return T_OP_MENOR; }
-">"            { return T_OP_MAIOR; }
-"+"            { return T_OP_SOMA; }
-"-"            { return T_OP_SUB; }
-"*"            { return T_OP_MULT; }
-"/"            { return T_OP_DIV; }
-"="            { return T_OP_ATRIBUICAO; }
+"se_for"           { return T_OP_IGUALDADE; }
+"se_nao_for"           { return T_OP_DIFERENTE; }
+"no_maximo"           { return T_OP_MENOR_IGUAL; }
+"no_minimo"           { return T_OP_MAIOR_IGUAL; }
+"menos_que"            { return T_OP_MENOR; }
+"mais_que"            { return T_OP_MAIOR; }
+"adiciona"            { return T_OP_SOMA; }
+"tira"            { return T_OP_SUB; }
+"vezes"            { return T_OP_MULT; }
+"fatiado_por"            { return T_OP_DIV; }
+"vira"            { return T_OP_ATRIBUICAO; }
 
 ";"            { return T_PONTO_VIRGULA; }
 ","            { return T_VIRGULA; }

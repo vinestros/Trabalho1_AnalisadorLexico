@@ -3,23 +3,23 @@ liquido agua;
 medida buf[4];
 tempero cominho;
 
-litro = 10;
-agua = 1.5;
-buf[0] = litro + 1;
-cominho = 'z';
+litro vira 10;
+agua vira 1.5;
+buf[0] vira litro adiciona 1;
+cominho vira 'z';
 
-prove (litro != 0) {
-    litro = litro * 2;
+prove (litro se_nao_for 0) {
+    litro vira litro vezes 2;
 } se_ruim {
-    litro = 0;
+    litro vira 0;
 }
 
-cozinhando (litro > 0) {
-    litro = litro - 1;
+cozinhando (litro mais_que 0) {
+    litro vira litro tira 1;
 }
 
-prove (litro == 0) {
-    agua = agua + 1.0;
+prove (litro se_for 0) {
+    agua vira agua adiciona 1.0;
 }
 
 sirva litro;

@@ -58,17 +58,17 @@ Tokens emitidos pelo `yylex()` e impressos no `switch` do `main`.
 | Literal | `STRING_LITERAL` | `T_STRING` | `<str, "…">` |
 | Literal | `CHAR_LITERAL` | `T_LITERAL_CHAR` | `<char_val, 'x'>` |
 | Identificador | `ID` | `T_ID` (`yylval` = índice na tabela) | `<id, índice>` |
-| Operador | `==` | `T_OP_IGUALDADE` | `<==>` |
-| Operador | `!=` | `T_OP_DIFERENTE` | `<!=>` |
-| Operador | `<=` | `T_OP_MENOR_IGUAL` | `<<=>` |
-| Operador | `>=` | `T_OP_MAIOR_IGUAL` | `<>=>` |
-| Operador | `<` | `T_OP_MENOR` | `<<>` |
-| Operador | `>` | `T_OP_MAIOR` | `<>>` |
-| Operador | `+` | `T_OP_SOMA` | `<+>` |
-| Operador | `-` | `T_OP_SUB` | `<->` |
-| Operador | `*` | `T_OP_MULT` | `<*>` |
-| Operador | `/` | `T_OP_DIV` | `</>` |
-| Operador | `=` | `T_OP_ATRIBUICAO` | `<=>` |
+| Operador | `se_for` | `T_OP_IGUALDADE` | `<==>` |
+| Operador | `se_nao_for` | `T_OP_DIFERENTE` | `<!=>` |
+| Operador | `no_maximo` | `T_OP_MENOR_IGUAL` | `<<=>` |
+| Operador | `no_minimo` | `T_OP_MAIOR_IGUAL` | `<>=>` |
+| Operador | `menos_que` | `T_OP_MENOR` | `<<>` |
+| Operador | `mais_que` | `T_OP_MAIOR` | `<>>` |
+| Operador | `adiciona` | `T_OP_SOMA` | `<+>` |
+| Operador | `tira` | `T_OP_SUB` | `<->` |
+| Operador | `vezes` | `T_OP_MULT` | `<*>` |
+| Operador | `fatiado_por` | `T_OP_DIV` | `</>` |
+| Operador | `vira` | `T_OP_ATRIBUICAO` | `<=>` |
 | Separador | `;` | `T_PONTO_VIRGULA` | `<;>` |
 | Separador | `,` | `T_VIRGULA` | `<,>` |
 | Separador | `(` `)` `{` `}` `[` `]` | respectivos `T_*` | `<(>` … `<]>` |
@@ -97,8 +97,8 @@ comando         ::= atrib ";"
                   | "sirva" [ expr ] ";"
                   | bloco ;
 
-atrib           ::= IDENT "=" expr
-                  | IDENT "[" expr "]" "=" expr ;
+atrib           ::= IDENT "vira" expr
+                  | IDENT "[" expr "]" "vira" expr ;
 
 chamada         ::= IDENT "(" [ lista_expr ] ")" ;
 
@@ -109,9 +109,9 @@ params          ::= param { "," param } ;
 param           ::= tipo IDENT ;
 
 expr            ::= expr_rel ;
-expr_rel        ::= expr_arit [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) expr_arit ] ;
-expr_arit       ::= termo { ( "+" | "-" ) termo } ;
-termo           ::= fator { ( "*" | "/" ) fator } ;
+expr_rel        ::= expr_arit [ ( "se_for" | "se_nao_for" | "menos_que" | "mais_que" | "no_maximo" | "no_minimo" ) expr_arit ] ;
+expr_arit       ::= termo { ( "adiciona" | "tira" ) termo } ;
+termo           ::= fator { ( "vezes" | "fatiado_por" ) fator } ;
 fator           ::= INTEIRO | FLOAT | CHAR_LITERAL | STRING_LITERAL
                   | IDENT [ "[" expr "]" | "(" [ lista_expr ] ")" ]
                   | "(" expr ")" ;
@@ -197,7 +197,7 @@ stateDiagram-v2
     F2 --> [*] : aceita_FLOAT
 ```
 
-### 6.4. Operadores de dois caracteres (`==`, `!=`, `<=`, `>=`)
+### 6.4. Operadores relacionais por palavra-chave (`se_for`, `se_nao_for`, `no_maximo`, `no_minimo`)
 
 ```mermaid
 stateDiagram-v2

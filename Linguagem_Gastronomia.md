@@ -1,306 +1,201 @@
-# Linguagem temática de gastronomia
+# Grupo
+O grupo e composto por Pedro Henrique, Joao Pedro Sales e Vinicius Menezes.
 
-Este documento especifica a **linguagem fonte** (vocabulário e estruturas pretendidas) e o **léxico reconhecido** pelo analisador implementado em Flex/C ([`scanner_c.l`](scanner_c.l)). O objetivo é permitir análise do código Flex sem ambiguidade: padrões, tokens emitidos, saída e política da tabela de símbolos.
+# Linguagem tematica de gastronomia - Estado final do projeto
 
----
-
-## 1. Visão geral
-
-A linguagem proposta adota uma abordagem imperativa estruturada, em que os programas são compostos por comandos executados sequencialmente, com suporte a controle de fluxo por meio de condicionais e laços de repetição. A escolha de uma temática de gastronomia tem como objetivo tornar os programas mais expressivos e intuitivos, sem comprometer o rigor formal necessário para definição de uma linguagem. Além disso, essa linguagem mantém compatibilidade com o conjunto de caracteres ASCII, garantindo portabilidade e previsibilidade na análise léxica, especialmente no reconhecimento de identificadores, literais e operadores.
-
-| Aspecto | Descrição |
-|--------|-------------|
-| Codificação | ASCII |
-| Paradigma | Imperativo, tipagem estática (conceito da linguagem; verificação semântica não é escopo do T1) |
-| Analisador | Léxico apenas: sequência de tokens + tabela de símbolos para identificadores |
-
-
-**Palavras-chave léxicas** 
-
-| Lexema na fonte | Papel na linguagem | Token interno (enum) | Rótulo na saída do `main` |
-|-----------------|-------------------|------------------------|----------------------------|
-| `prove` | Condicional (equivalente a *if*) | `T_IF` | `<if>` |
-| `se_ruim` | Ramo alternativo (equivalente a *else*) | `T_ELSE` | `<else>` |
-| `cozinhando` | Repetição condicionada (equivalente a *while*) | `T_WHILE` | `<while>` |
-| `medida` | Tipo inteiro | `T_INT_KEYWORD` | `<int>` |
-| `liquido` | Tipo ponto flutuante | `T_FLOAT_KEYWORD` | `<float>` |
-| `tempero` | Tipo caractere | `T_CHAR_KEYWORD` | `<char>` |
-| `sirva` | Retorno de função | `T_RETURN` | `<return>` |
-
+Este documento descreve o estado final implementado no projeto, com integracao entre analisador lexico (Flex) e analisador sintatico (Bison), incluindo geracao de arvore sintatica (AST).
 
 ---
 
-## 2. Especificação léxica
+## 1. Visao geral da arquitetura final
 
-Definições de apelidos em Flex (equivalente a regex):
+A linguagem segue paradigma imperativo, com tipagem estatica para `medida`, `liquido` e `tempero`, suporte a vetor numerico, expressoes, condicionais, repeticao e funcoes.
 
-| Nome (Flex) | Padrão | Descrição |
-|---------------|--------|-----------|
-| `DIGITO` | `[0-9]` | Dígito decimal |
-| `LETRA` | `[a-zA-Z_]` | Letra ou sublinhado (início de identificador) |
-| `ID` | `{LETRA}({LETRA}\|{DIGITO})*` | Identificador |
-| `INTEIRO` | `{DIGITO}+` | Literal inteiro |
-| `FLOAT` | `{DIGITO}+\.{DIGITO}*` | Literal flutuante (obrigatório o ponto; parte fracionária pode ser vazia, ex.: `3.`) |
-| `COMENTARIO_LINHA` | `\/\/[^\n]*` | Comentário até fim de linha |
-| `COMENTARIO_BLOCO` | `\/\*([^*]\|\*+[^*/])*\*+\/` | Comentário de bloco estilo C |
-| `STRING_LITERAL` | `\"[^"]*\"` | Cadeia entre aspas duplas (não permite quebra de linha nem `\"` escapado) |
-| `CHAR_LITERAL` | `'[^']'` | Um caractere entre aspas simples |
+No estado final:
 
-### 2.1. Tabela de tokens (padrão → token → saída)
+- O **Flex** (`scanner_c.l`) faz tokenizacao.
+- O **Bison** (`parser.y`) valida a sintaxe.
+- O parser constroi e imprime a **arvore sintatica** no formato hierarquico.
 
-A representação textual dos tokens foi projetada para ser legível e informativa, permitindo a fácil inspeção manual da saída do analisador, no qual os formatos seguem o padrão:
+Arquivos principais:
 
-  * <classe, valor> para tokens parametrizados (como números e identificadores) 
-  * <símbolo> para tokens simples (como operadores e separadores)
-
-Essa padronização facilita tanto a depuração quanto a integração futura com analisadores sintáticos.
-
-
-Tokens emitidos pelo `yylex()` e impressos no `switch` do `main`.
-
-| Classe | Padrão / lexema | `return` / tipo | Saída textual (`printf`) |
-|--------|-----------------|-----------------|---------------------------|
-| Ignorado | espaços, tab, `\n` | (nenhum) | — |
-| Ignorado | comentário linha/bloco | (nenhum) | — |
-| Palavra-chave | ver tabela acima | `T_IF` … `T_RETURN` | `<if>` … `<return>` |
-| Literal | `INTEIRO` | `T_INTEGER` (`yylval` = valor `atoi`) | `<num, n>` |
-| Literal | `FLOAT` | `T_FLOAT` | `<float_val, texto>` |
-| Literal | `STRING_LITERAL` | `T_STRING` | `<str, "…">` |
-| Literal | `CHAR_LITERAL` | `T_LITERAL_CHAR` | `<char_val, 'x'>` |
-| Identificador | `ID` | `T_ID` (`yylval` = índice na tabela) | `<id, índice>` |
-| Operador | `se_for` | `T_OP_IGUALDADE` | `<==>` |
-| Operador | `se_nao_for` | `T_OP_DIFERENTE` | `<!=>` |
-| Operador | `no_maximo` | `T_OP_MENOR_IGUAL` | `<<=>` |
-| Operador | `no_minimo` | `T_OP_MAIOR_IGUAL` | `<>=>` |
-| Operador | `menos_que` | `T_OP_MENOR` | `<<>` |
-| Operador | `mais_que` | `T_OP_MAIOR` | `<>>` |
-| Operador | `adiciona` | `T_OP_SOMA` | `<+>` |
-| Operador | `tira` | `T_OP_SUB` | `<->` |
-| Operador | `vezes` | `T_OP_MULT` | `<*>` |
-| Operador | `fatiado_por` | `T_OP_DIV` | `</>` |
-| Operador | `vira` | `T_OP_ATRIBUICAO` | `<=>` |
-| Separador | `;` | `T_PONTO_VIRGULA` | `<;>` |
-| Separador | `,` | `T_VIRGULA` | `<,>` |
-| Separador | `(` `)` `{` `}` `[` `]` | respectivos `T_*` | `<(>` … `<]>` |
-| Erro | qualquer outro byte | `T_UNKNOWN` | mensagem em `stderr`; sem token na sequência “bonita” |
+- `scanner_c.l`: regras lexicas e retorno de tokens para o parser.
+- `parser.y`: gramatica, AST e `main` com `yyparse()`.
+- `teste.lang`: teste base da linguagem.
+- `teste_sintatico.lang`: teste completo com funcoes e chamada de funcao.
+- `teste_erro_sintatico.lang`: teste com erro proposital.
 
 ---
 
-## 3. Estruturas da linguagem (sintaxe conceitual — EBNF)
+## 2. Palavras-chave e operadores da linguagem
 
-O trabalho exige uma linguagem imperativa com variáveis numéricas (inteiro/flutuante), vetores numéricos, expressões, condicionais, laço, funções com tipos explícitos. Abaixo uma **gramática de referência** alinhada ao vocabulário gastronômico e aos tokens do scanner (não substitui um parser; serve de contrato para o grupo).
+### 2.1 Palavras-chave
 
-```ebnf
-programa        ::= { decl_ou_item } ;
-decl_ou_item    ::= decl_var ";"
-                  | decl_fun
-                  | comando ;
+| Lexema | Papel |
+|--------|-------|
+| `prove` | condicional (`if`) |
+| `se_ruim` | ramo alternativo (`else`) |
+| `cozinhando` | repeticao (`while`) |
+| `medida` | tipo inteiro |
+| `liquido` | tipo flutuante |
+| `tempero` | tipo caractere |
+| `sirva` | retorno |
+| `vazio` | retorno void |
+| `receita` | declaracao de funcao |
 
-decl_var        ::= tipo IDENT [ "[" expr_inteira "]" ] ;
-tipo            ::= "medida" | "liquido" | "tempero" ;
-expr_inteira    ::= INTEIRO ;   (* literal positivo na declaração de tamanho *)
+### 2.2 Operadores
 
-comando         ::= atrib ";"
-                  | chamada ";"
-                  | "prove" "(" expr ")" bloco [ "se_ruim" bloco ]
-                  | "cozinhando" "(" expr ")" bloco
-                  | "sirva" [ expr ] ";"
-                  | bloco ;
-
-atrib           ::= IDENT "vira" expr
-                  | IDENT "[" expr "]" "vira" expr ;
-
-chamada         ::= IDENT "(" [ lista_expr ] ")" ;
-
-bloco           ::= "{" { comando } "}" ;
-
-decl_fun        ::= tipo IDENT "(" [ params ] ")" bloco ;
-params          ::= param { "," param } ;
-param           ::= tipo IDENT ;
-
-expr            ::= expr_rel ;
-expr_rel        ::= expr_arit [ ( "se_for" | "se_nao_for" | "menos_que" | "mais_que" | "no_maximo" | "no_minimo" ) expr_arit ] ;
-expr_arit       ::= termo { ( "adiciona" | "tira" ) termo } ;
-termo           ::= fator { ( "vezes" | "fatiado_por" ) fator } ;
-fator           ::= INTEIRO | FLOAT | CHAR_LITERAL | STRING_LITERAL
-                  | IDENT [ "[" expr "]" | "(" [ lista_expr ] ")" ]
-                  | "(" expr ")" ;
-
-lista_expr      ::= expr { "," expr } ;
-```
+| Lexema | Papel |
+|--------|-------|
+| `vira` | atribuicao |
+| `adiciona`, `tira`, `vezes`, `fatiado_por` | operadores aritmeticos |
+| `se_for`, `se_nao_for`, `menos_que`, `mais_que`, `no_maximo`, `no_minimo` | operadores relacionais |
 
 ---
 
-## 4. Tabela de símbolos e formato de saída
+## 3. Especificacao lexica implementada (Flex)
 
-A tabela de símbolos tem papel fundamental na análise léxica, uma vez que possibilita associar cada identificador a uma posição única. Essa abordagem evita duplicação e facilita etapas posteriores, como análise semântica e geração de código. Nesse sentido, a política adotada é baseada em inserção sob demanda, visto que:
+Principais classes reconhecidas em `scanner_c.l`:
 
-  * Ao encontrar um identificador pela primeira vez, ele é inserido na tabela. 
-  * Ocorrências subsequentes reutilizam o índice previamente atribuído. 
+- Identificadores: `ID_TOKEN`
+- Inteiros: `INTEIRO`
+- Flutuantes: `FLOAT_NUM`
+- Strings: `STRING_LITERAL`
+- Char literal: `CHAR_LITERAL`
+- Comentarios de linha e bloco
+- Separadores: `;`, `,`, `(`, `)`, `{`, `}`, `[`, `]`
 
-Assim, essa estratégia garante que cada identificador possua uma representação única durante toda a execução do analisador.
+Detalhe importante do estado final:
 
-
-Implementação em [`scanner_c.l`](scanner_c.l):
-
-- Vetor `symbol_table[MAX_SYMBOLS]` com `MAX_SYMBOLS = 100`.
-- Função `get_symbol_position(const char *id)`:
-  - Se o identificador já existe, retorna o **índice** existente.
-  - Caso contrário, insere cópia com `strdup` e retorna o novo índice (`0..symbol_count-1`).
-  - Se a tabela estiver cheia, emite erro em `stderr` e retorna `-1` (nesse caso o `yylex` não retorna `T_ID` de forma útil para o índice).
-
-**Saída padrão:**
-
-1. Linha inicial `Sequência de Tokens:` seguida dos tokens na ordem de leitura.
-2. Identificadores como `<id, n>` onde `n` é o índice na tabela.
-3. Ao final, bloco `--- Tabela de Símbolos Final ---` listando `Posição | Identificador`.
-
-**Fim de arquivo:** `yylex()` retorna `0` (`T_EOF`) e o laço do `main` encerra.
+- IDs e literais sao enviados ao parser por `yylval.str = strdup(yytext)`.
+- O scanner **nao** imprime mais sequencia de tokens; ele alimenta o parser.
+- Erro lexico reporta linha e retorna caractere inesperado para o parser.
 
 ---
 
-## 5. Tratamento de erros léxicos
+## 4. Gramatica sintatica implementada (Bison)
 
-- Qualquer caractere que **não** case com nenhuma regra antes do catch-all `.` gera:
-  - Mensagem em `stderr`: `Erro Léxico na linha L: Caractere inesperado 'X'`
-  - Retorno `T_UNKNOWN`; no `switch` do `main`, o caso não imprime token na sequência (apenas o erro).
+A gramatica final em `parser.y` cobre:
 
-**Exemplos de erro:**
+- Declaracoes simples e com vetor.
+- Atribuicoes em variavel e acesso de vetor.
+- Blocos.
+- `if` e `if/else`.
+- `while`.
+- `return` com e sem expressao.
+- Declaracao de funcao com `receita`, parametros tipados e retorno tipado/`vazio`.
+- Chamada de funcao com lista de argumentos.
+- Expressoes aritmeticas com precedencia (`+`, `-`, `*`, `/`).
+- Condicoes relacionais no formato:
+  - `expression relop expression`.
 
-- Caractere Unicode ou acentuado fora do conjunto esperado pelo padrão (depende do arquivo fonte em bytes).
-- Operador ou símbolo não previsto (ex.: `@`).
-
-**Limitações do léxico atual (documentar = honestidade):**
-
-- `STRING_LITERAL` não admite `\"` ou quebra de linha dentro da string.
-- `CHAR_LITERAL` admite exatamente um caractere entre aspas; não há escape para `\'`.
-
----
-
-## 6. Diagramas de transição (autômatos finitos)
-
-
-### 6.1. Identificador (`ID`)
-
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> S0
-    S0 --> S1 : LETRA
-    S1 --> S1 : LETRA_ou_DIGITO
-    S1 --> [*] : aceita_ID
-```
-
-### 6.2. Literal inteiro (`INTEIRO`)
-
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> N0
-    N0 --> N1 : DIGITO
-    N1 --> N1 : DIGITO
-    N1 --> [*] : aceita_INTEIRO
-```
-
-### 6.3. Literal flutuante (`FLOAT` = dígitos + '.' + dígitos opcionais)
-
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> F0
-    F0 --> F1 : DIGITO
-    F1 --> F1 : DIGITO
-    F1 --> F2 : "."
-    F2 --> F2 : DIGITO
-    F2 --> [*] : aceita_FLOAT
-```
-
-### 6.4. Operadores relacionais por palavra-chave (`se_for`, `se_nao_for`, `no_maximo`, `no_minimo`)
-
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> O0
-    O0 --> O1 : primeiro_char
-    O1 --> [*] : segundo_char_igual_esperado
-    O1 --> [*] : retrocesso_se_apenas_um_char
-```
-
-### 6.5. Comentário de linha
-
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> C0
-    C0 --> C1 : "/"
-    C1 --> C2 : "/"
-    C2 --> C2 : nao_nova_linha
-    C2 --> [*] : nova_linha_ou_EOF
-```
-
-### 6.6. Fluxo geral do analisador (visão de processo)
-
-```mermaid
-flowchart TD
-    entrada[Entrada_arquivo_ou_stdin] --> yylex[yylex_Flex]
-    yylex --> match{Regra_mais_longa}
-    match --> tokPalavra[Token_palavra_chave]
-    match --> tokLit[Token_literal]
-    match --> tokId[Token_ID_tabela]
-    match --> tokOp[Token_operador]
-    match --> tokSep[Token_separador]
-    match --> tokIgn[Ignorar_WS_comentario]
-    match --> tokErr[Token_UNKNOWN_stderr]
-    tokPalavra --> saida[stdout_sequencia]
-    tokLit --> saida
-    tokId --> saida
-    tokOp --> saida
-    tokSep --> saida
-    tokIgn --> yylex
-    tokErr --> yylex
-    saida --> yylex
-    yylex --> fim[EOF_imprime_tabela]
-```
+Tokens e tipos sintaticos sao centralizados no Bison (`%token`, `%union`, `%type`) e compartilhados com o scanner por `parser.tab.h`.
 
 ---
 
-## 7. Guia de compilação e execução
+## 5. Arvore sintatica (AST) e saida
 
-Ambiente típico: **Flex** + **GCC** (MinGW/MSYS2/WSL no Windows).
+A AST e montada no parser com nos hierarquicos, por exemplo:
+
+- `program`
+- `statement list`
+- `statement`
+- `declaration`
+- `attribution`
+- `if statement`
+- `while statement`
+- `function declaration`
+- `function call`
+- `return`
+- `rlop`
+
+Quando a analise termina com sucesso:
+
+1. O parser imprime `Arvore sintatica:`
+2. Exibe a arvore em formato textual com prefixo por profundidade (`-`).
+
+Em erro sintatico:
+
+- `yyerror` imprime `Erro sintatico na linha X: ...`.
+
+---
+
+## 6. Como compilar e executar
+
+Exemplo no WSL/Linux:
 
 ```bash
-# Gerar lex.yy.c a partir da especificação Flex
+bison -d -o parser.tab.c parser.y
 flex -o lex.yy.c scanner_c.l
-
-# Compilar o scanner com a biblioteca do Flex (-lfl no Linux; no MinGW muitas vezes não é necessário)
-gcc -o lexer lex.yy.c
-
-# Executar sobre um arquivo fonte da linguagem
-./lexer teste.lang
+gcc -o parser parser.tab.c lex.yy.c
+./parser teste.lang
+./parser teste_sintatico.lang
+./parser teste_erro_sintatico.lang
 ```
 
-A saída esperada começa com `Sequência de Tokens:` e termina com a tabela de símbolos. Compare com o exemplo em [`teste.lang`](teste.lang).
+Saidas esperadas:
+
+- `teste.lang` e `teste_sintatico.lang`: arvore sintatica impressa.
+- `teste_erro_sintatico.lang`: mensagem de erro sintatico.
 
 ---
 
-## 8. Exemplo completo 
+## 7. Alteracoes realizadas e motivo
 
-Arquivo [`teste.lang`](teste.lang) ilustra declarações, atribuições, vetor, condicional com `se_ruim`, laço `cozinhando` e `sirva`.
+Esta secao registra o que foi alterado para sair do estado de T1 (lexico) para T2 (sintatico).
+
+### 7.1 Integracao Flex + Bison
+
+**Alteracao feita**
+- O scanner passou a incluir `parser.tab.h` e retornar tokens definidos no parser.
+- O fluxo principal passou para `yyparse()` no `parser.y`.
+
+**Motivo**
+- Evitar duplicacao e divergencia de tokens entre scanner e parser.
+- Atender ao requisito de integracao entre analise lexica e sintatica.
+
+### 7.2 Migracao de saida de tokens para AST
+
+**Alteracao feita**
+- Remocao da estrategia antiga de imprimir apenas sequencia de tokens no scanner.
+- Implementacao de construcao e impressao de AST no parser.
+
+**Motivo**
+- O enunciado do Trabalho 2 exige exibicao da arvore sintatica com atributos.
+
+### 7.3 Ajuste de identificadores e literais
+
+**Alteracao feita**
+- IDs e literais passaram a trafegar via `yylval.str`.
+
+**Motivo**
+- Permitir que o parser monte nos da AST com nomes de identificadores e valores literais.
+
+### 7.4 Inclusao de funcoes na linguagem implementada
+
+**Alteracao feita**
+- Implementadas regras para declaracao de funcao (`receita`) com parametros, retorno tipado ou `vazio`, chamada e `sirva`.
+
+**Motivo**
+- Cobrir requisito obrigatorio do Trabalho 2 sobre funcoes.
+
+### 7.5 Atualizacao dos testes
+
+**Alteracao feita**
+- Adicao de `teste_sintatico.lang` e `teste_erro_sintatico.lang`.
+
+**Motivo**
+- Validar cenarios de sucesso e erro sintatico de forma objetiva.
 
 ---
 
-## 9. Conclusão
+## 8. Conclusao
 
-A linguagem proposta atende aos requisitos definidos para o trabalho, uma vez que oferece um conjunto consistente de construções para programação imperativa.
-Assim, o analisador léxico implementado é capaz de reconhecer corretamente os elementos fundamentais da linguagem, gerando uma representação estruturada por meio de tokens e mantendo uma tabela de símbolos para identificadores.
-Portanto, a documentação detalhada apresentada neste documento, garante a compreensibilidade, tanto da linguagem quanto do funcionamento do analisador, permitindo sua avaliação, manutenção e possível evolução para etapas posteriores de compilação.
+O projeto agora representa o estado final esperado para o Trabalho 2:
 
----
+- Scanner lexico funcional.
+- Parser sintatico integrado.
+- Geracao de arvore sintatica textual.
+- Cobertura de estruturas obrigatorias da linguagem.
 
-## 10. Referências de arquivos
-
-| Arquivo | Papel |
-|---------|--------|
-| [`scanner_c.l`](scanner_c.l) | Especificação Flex, enum de tokens, tabela de símbolos, `main` |
-| [`teste.lang`](teste.lang) | Exemplo de programa fonte |
-| [`Trabalho1_Requisitos.md`](Trabalho1_Requisitos.md) | Enunciado e critérios de avaliação |
+Com isso, a implementacao deixa de ser somente lexico (T1) e passa a atender os requisitos centrais de analise sintatica (T2).

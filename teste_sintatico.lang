@@ -1,0 +1,33 @@
+receita medida soma(medida a, medida b) {
+    sirva a adiciona b;
+}
+
+receita vazio imprime_zero() {
+    medida x;
+    x vira 0;
+    sirva;
+}
+
+medida litro;
+liquido agua;
+medida buf[4];
+tempero sal;
+
+litro vira 10;
+agua vira 1.5;
+buf[0] vira litro adiciona 1;
+sal vira 'z';
+
+prove (litro se_nao_for 0) {
+    litro vira litro vezes 2;
+} se_ruim {
+    litro vira 0;
+}
+
+cozinhando (litro mais_que 0) {
+    litro vira litro tira 1;
+}
+
+litro vira soma(litro, 2);
+imprime_zero();
+sirva litro;

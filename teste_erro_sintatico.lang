@@ -1,0 +1,9 @@
+medida x;
+liquido y;
+
+x vira 10
+y vira 2.5;
+
+prove (x se_for 10) {
+    y vira y adiciona 1.0;
+}
